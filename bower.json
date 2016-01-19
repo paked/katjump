@@ -1,0 +1,14 @@
+{
+  "name": "KatJump",
+  "version": "0.0.0",
+  "homepage": "https://github.com/paked/jump",
+  "authors": [
+    "Harrison <harrison@theshoebridges.com>"
+  ],
+  "description": "A clone of the old multiplayer game SkyJump",
+  "main": "index.html",
+  "license": "MIT",
+  "dependencies": {
+    "phaser": "~2.4.4"
+  }
+}
