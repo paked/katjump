@@ -4,14 +4,23 @@ function preload() {
     game.load.image('player_one', 'img/player_one.png');
     game.load.image('player_two', 'img/player_two.png');
     game.load.image('platform', 'img/platform.png');
+    game.load.image('platform_small', 'img/platform_small.png');
     game.load.image('fire', 'img/fire.png');
 }
 
-// constants
+// Constants
+var START_X_OFFSET = 128,
+    START_Y_OFFSET = 256
+
 var PLAYER_ONE = 0,
     PLAYER_TWO = 1;
 
+var BEGINNING_STATE = 0,
+    BATTLING_STATE = 1,
+    MAHEM_STATE = 2,
+    WAITING_STATE = 3;
 
+// Globals
 var players;
 var platforms;
 var fire;
@@ -23,10 +32,10 @@ function create() {
 
     players = game.add.group();
 
-    var p1 = new Player(game, 0, 0, PLAYER_ONE);
+    var p1 = new Player(game, START_X_OFFSET, 0, PLAYER_ONE);
     players.add(p1);
 
-    var p2 = new Player(game, 0, 0, PLAYER_TWO);
+    var p2 = new Player(game, game.width - START_X_OFFSET, 0, PLAYER_TWO);
     players.add(p2);
 
     platforms = new World(game);
@@ -83,7 +92,7 @@ Player.prototype.update = function() {
 
 Player.prototype._generateMovement = function() {
     var keys = game.input.keyboard.createCursorKeys();
-    if (this.id == PLAYER_TWO) {
+    if (this.id == PLAYER_ONE) {
         console.log('p2');
         keys = game.input.keyboard.addKeys({
             'up': Phaser.KeyCode.W,
@@ -104,13 +113,44 @@ function World(game) {
     this.enableBody = true;
     this.physicsBodyType = Phaser.Physics.ARCADE;
 
-    for (var i = 0; i < 5; i++) {
-        this.create(game.rnd.between(0, game.width), game.rnd.between(0, game.height), 'platform');
-    }
-
     this.setAll('body.allowGravity', false);
     this.setAll('body.immovable', true);
+
+    this.currentState = BEGINNING_STATE;
 }
 
 World.prototype = Object.create(Phaser.Group.prototype);
 World.prototype.constructor = World;
+
+World.prototype.update = function() {
+    Phaser.Group.prototype.update.call(this);
+
+    switch(this.currentState) {
+    // Create a platform underneath each player.
+    case BEGINNING_STATE:
+        // For player one (right side)
+        var p = this.create(START_X_OFFSET, START_Y_OFFSET, 'platform_small');
+        p.body.allowGravity = false;
+        p.body.immovable = true;
+        p.anchor.x = 0.5;
+
+        // For player two (left side)
+        var p = this.create(game.width - START_X_OFFSET, START_Y_OFFSET, 'platform_small');
+        p.body.allowGravity = false;
+        p.body.immovable = true;
+        p.anchor.x = 0.5;
+        
+        // Set timers to go to battling state. Meanwhile go to limbo.
+        this.currentState = WAITING_STATE;
+        break;
+    case BATTLING_STATE:
+        break;
+    case MAHEM_STATE:
+        break;
+    case WAITING_STATE:
+        // Do nothing, waiting for timer to trigger.
+        break;
+    default:
+        console.log('shit happened!');
+    };
+};
