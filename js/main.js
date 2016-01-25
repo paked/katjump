@@ -158,6 +158,7 @@ function Platform(game, x, y, type) {
     var sprite = 'platform';
     if (type == PLATFORM_SHORT) {
         sprite = 'platform_short';
+        game.time.events.add(Phaser.Timer.SECOND, this.despawn, this);
     }
 
     Phaser.Sprite.call(this, game, x, y, sprite);
@@ -166,7 +167,17 @@ function Platform(game, x, y, type) {
     this.body.allowGravity = false;
     this.body.immovable = true;
     this.anchor.x = 0.5;
-};
+}
 
 Platform.prototype = Object.create(Phaser.Sprite.prototype);
 Platform.prototype.constructor = Platform;
+
+Platform.prototype.despawn = function() {
+    console.log('despawning');
+
+    game.add.tween(this).to( { alpha: 0.1 }, 2000, Phaser.Easing.Linear.None, true).
+        onComplete.
+        add(function() {
+            this.kill();
+        }, this);
+};
