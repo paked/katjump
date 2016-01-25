@@ -9,15 +9,13 @@ var playerOne;
 var platforms;
 var cursors;
 
-var jumpTime = 0;
-
 function create() {
     game.physics.startSystem(Phaser.Physics.ARCADE);
 
     game.physics.arcade.gravity.y = 250;
 
-    playerOne = game.add.sprite(0, 0, 'player_one');
-    game.physics.enable(playerOne);
+    playerOne = new Player(game, 0, 0);
+    game.add.existing(playerOne);
 
     platforms = game.add.physicsGroup();
 
@@ -33,19 +31,31 @@ function create() {
 
 function update() {
     game.physics.arcade.collide(playerOne, platforms);
+}
 
-    playerOne.body.velocity.x = 0;
+function Player(game, x, y) {
+    Phaser.Sprite.call(this, game, x, y, 'player_one');
+    game.physics.enable(this);
+
+    this.jumpTime = 0;
+}
+
+Player.prototype = Object.create(Phaser.Sprite.prototype);
+Player.prototype.constructor = Player;
+
+Player.prototype.update = function() {
+    this.body.velocity.x = 0;
 
     if (cursors.right.isDown) {
-        playerOne.body.velocity.x = 200;
+        this.body.velocity.x = 200;
     }
 
     if (cursors.left.isDown) {
-        playerOne.body.velocity.x = -200;
+        this.body.velocity.x = -200;
     }
 
-    if (cursors.up.isDown && (playerOne.body.touching.down || playerOne.body.onFloor()) && game.time.now > jumpTime) {
-        playerOne.body.velocity.y = -300;
-        jumpTime = game.time.now + 750;
+    if (cursors.up.isDown && (this.body.touching.down || this.body.onFloor()) && game.time.now > this.jumpTime) {
+        this.body.velocity.y = -300;
+        this.jumpTime = game.time.now + 750;
     }
-}
+};
