@@ -3,11 +3,13 @@ var game = new Phaser.Game(800, 600, Phaser.AUTO, 'katjump', { preload: preload,
 function preload() {
     game.load.image('player_one', 'img/player_one.png');
     game.load.image('platform', 'img/platform.png');
+    game.load.image('fire', 'img/fire.png');
 }
 
 var playerOne;
 var platforms;
 var cursors;
+var fire;
 
 function create() {
     game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -27,10 +29,20 @@ function create() {
     platforms.setAll('body.immovable', true);
 
     cursors = game.input.keyboard.createCursorKeys();
+
+    fire = game.add.sprite(0, 0, 'fire');
+    game.physics.arcade.enable(fire);
+
+    fire.y = game.height - fire.height;
+    fire.body.allowGravity = false;
+    fire.body.immovable = true;
 }
 
 function update() {
     game.physics.arcade.collide(playerOne, platforms);
+    game.physics.arcade.overlap(playerOne, fire, function(p, f) {
+        p.kill();
+    });
 }
 
 function Player(game, x, y) {
