@@ -2,13 +2,20 @@ var game = new Phaser.Game(800, 600, Phaser.AUTO, 'katjump', { preload: preload,
 
 function preload() {
     game.load.image('player_one', 'img/player_one.png');
+    game.load.image('player_two', 'img/player_two.png');
     game.load.image('platform', 'img/platform.png');
     game.load.image('fire', 'img/fire.png');
 }
 
+// constants
+var PLAYER_ONE = 0,
+    PLAYER_TWO = 1;
+
+
 var playerOne;
+var playerTwo;
+var players;
 var platforms;
-var cursors;
 var fire;
 
 function create() {
@@ -16,8 +23,13 @@ function create() {
 
     game.physics.arcade.gravity.y = 250;
 
-    playerOne = new Player(game, 0, 0);
-    game.add.existing(playerOne);
+    players = game.add.group();
+
+    playerOne = new Player(game, 0, 0, PLAYER_ONE);
+    players.add(playerOne);
+
+    playerTwo = new Player(game, 0, 0, PLAYER_TWO);
+    players.add(playerTwo);
 
     platforms = game.add.physicsGroup();
 
@@ -28,8 +40,6 @@ function create() {
     platforms.setAll('body.allowGravity', false);
     platforms.setAll('body.immovable', true);
 
-    cursors = game.input.keyboard.createCursorKeys();
-
     fire = game.add.sprite(0, 0, 'fire');
     game.physics.arcade.enable(fire);
 
@@ -39,17 +49,25 @@ function create() {
 }
 
 function update() {
-    game.physics.arcade.collide(playerOne, platforms);
-    game.physics.arcade.overlap(playerOne, fire, function(p, f) {
+    game.physics.arcade.collide(players, platforms);
+    game.physics.arcade.overlap(players, fire, function(f, p) {
         p.kill();
     });
 }
 
-function Player(game, x, y) {
-    Phaser.Sprite.call(this, game, x, y, 'player_one');
+function Player(game, x, y, id) {
+    this.id = id;
+    var sprite = 'player_one';
+    if (this.id == PLAYER_TWO) {
+        sprite = 'player_two';
+    }
+
+    Phaser.Sprite.call(this, game, x, y, sprite);
     game.physics.enable(this);
 
     this.jumpTime = 0;
+
+    this.controls = this._generateMovement();
 }
 
 Player.prototype = Object.create(Phaser.Sprite.prototype);
@@ -58,16 +76,33 @@ Player.prototype.constructor = Player;
 Player.prototype.update = function() {
     this.body.velocity.x = 0;
 
-    if (cursors.right.isDown) {
+    if (this.controls.right.isDown) {
         this.body.velocity.x = 200;
     }
 
-    if (cursors.left.isDown) {
+    if (this.controls.left.isDown) {
         this.body.velocity.x = -200;
     }
 
-    if (cursors.up.isDown && (this.body.touching.down || this.body.onFloor()) && game.time.now > this.jumpTime) {
+    if (this.controls.up.isDown && (this.body.touching.down || this.body.onFloor()) && game.time.now > this.jumpTime) {
         this.body.velocity.y = -300;
         this.jumpTime = game.time.now + 750;
     }
 };
+
+Player.prototype._generateMovement = function() {
+    var keys = game.input.keyboard.createCursorKeys();
+    if (this.id == PLAYER_TWO) {
+        console.log('p2');
+        keys = game.input.keyboard.addKeys({
+            'up': Phaser.KeyCode.W,
+            'down': Phaser.KeyCode.S,
+            'right': Phaser.KeyCode.D,
+            'left': Phaser.KeyCode.A
+        });
+
+        console.log(keys);
+    }
+
+    return keys;
+}
