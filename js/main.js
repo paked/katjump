@@ -29,8 +29,9 @@ var platforms;
 var fire;
 
 function create() {
-    game.physics.startSystem(Phaser.Physics.ARCADE);
+    game.world.setBounds(0, 0, 800, 600);
 
+    game.physics.startSystem(Phaser.Physics.ARCADE);
     game.physics.arcade.gravity.y = 250;
 
     players = game.add.group();
@@ -55,6 +56,10 @@ function update() {
     game.physics.arcade.collide(players, platforms);
     game.physics.arcade.overlap(players, fire, function(f, p) {
         p.kill();
+    });
+    
+    players.forEach(function(p) {
+        game.world.wrap(p, 0, true, true, false);
     });
 }
 
@@ -165,7 +170,7 @@ World.prototype.update = function() {
 
         this.add(p);
 
-        game.time.events.add((Phaser.Timer.SECOND * 5) * game.rnd.frac(), function() {
+        game.time.events.add(Phaser.Timer.SECOND + (Phaser.Timer.SECOND * 3 * game.rnd.frac()), function() {
             this.currentState = BATTLING_STATE;
         }, this);
 
