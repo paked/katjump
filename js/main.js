@@ -132,13 +132,20 @@ World.prototype.update = function() {
     // Create a platform underneath each player.
     case BEGINNING_STATE:
         // For player one (right side)
-        var p = new Platform(game, START_X_OFFSET, START_Y_OFFSET, PLATFORM_SHORT);
-        this.add(p);
+        var p1 = new Platform(game, START_X_OFFSET, START_Y_OFFSET, PLATFORM_SHORT);
+        this.add(p1);
 
         // For player two (left side)
-        var p = new Platform(game, game.width - START_X_OFFSET, START_Y_OFFSET, PLATFORM_SHORT);
-        this.add(p);
+        var p2 = new Platform(game, game.width - START_X_OFFSET, START_Y_OFFSET, PLATFORM_SHORT);
+        this.add(p2);
        
+        game.time.events.add(Phaser.Timer.SECOND * 4, function() {
+            p1.despawn();
+            p2.despawn();
+
+            this.currentState = BATTLING_STATE;
+        }, this);
+
         // Set timers to go to battling state. Meanwhile go to limbo.
         this.currentState = WAITING_STATE;
         break;
@@ -158,7 +165,6 @@ function Platform(game, x, y, type) {
     var sprite = 'platform';
     if (type == PLATFORM_SHORT) {
         sprite = 'platform_short';
-        game.time.events.add(Phaser.Timer.SECOND, this.despawn, this);
     }
 
     Phaser.Sprite.call(this, game, x, y, sprite);
@@ -173,8 +179,6 @@ Platform.prototype = Object.create(Phaser.Sprite.prototype);
 Platform.prototype.constructor = Platform;
 
 Platform.prototype.despawn = function() {
-    console.log('despawning');
-
     game.add.tween(this).to( { alpha: 0.1 }, 2000, Phaser.Easing.Linear.None, true).
         onComplete.
         add(function() {
