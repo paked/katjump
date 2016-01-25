@@ -150,6 +150,26 @@ World.prototype.update = function() {
         this.currentState = WAITING_STATE;
         break;
     case BATTLING_STATE:
+        var p = new Platform(game, 0, game.rnd.integerInRange(64, game.height - 100), PLATFORM_NORMAL);
+        if (game.rnd.frac() < 0.5) {
+            p.body.velocity.x = 100;
+            p.x = -p.width/2;
+        } else {
+            p.body.velocity.x = -100;
+            p.x = game.width + p.width/2;
+        }
+
+        if (game.physics.arcade.overlap(p, this)) {
+            break;
+        }
+
+        this.add(p);
+
+        game.time.events.add((Phaser.Timer.SECOND * 5) * game.rnd.frac(), function() {
+            this.currentState = BATTLING_STATE;
+        }, this);
+
+        this.currentState = WAITING_STATE;
         break;
     case MAHEM_STATE:
         break;
