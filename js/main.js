@@ -4,7 +4,7 @@ function preload() {
     game.load.image('player_one', 'img/player_one.png');
     game.load.image('player_two', 'img/player_two.png');
     game.load.image('platform', 'img/platform.png');
-    game.load.image('platform_small', 'img/platform_small.png');
+    game.load.image('platform_short', 'img/platform_short.png');
     game.load.image('fire', 'img/fire.png');
 }
 
@@ -14,6 +14,9 @@ var START_X_OFFSET = 128,
 
 var PLAYER_ONE = 0,
     PLAYER_TWO = 1;
+
+var PLATFORM_NORMAL = 0,
+    PLATFORM_SHORT = 1;
 
 var BEGINNING_STATE = 0,
     BATTLING_STATE = 1,
@@ -129,17 +132,13 @@ World.prototype.update = function() {
     // Create a platform underneath each player.
     case BEGINNING_STATE:
         // For player one (right side)
-        var p = this.create(START_X_OFFSET, START_Y_OFFSET, 'platform_small');
-        p.body.allowGravity = false;
-        p.body.immovable = true;
-        p.anchor.x = 0.5;
+        var p = new Platform(game, START_X_OFFSET, START_Y_OFFSET, PLATFORM_SHORT);
+        this.add(p);
 
         // For player two (left side)
-        var p = this.create(game.width - START_X_OFFSET, START_Y_OFFSET, 'platform_small');
-        p.body.allowGravity = false;
-        p.body.immovable = true;
-        p.anchor.x = 0.5;
-        
+        var p = new Platform(game, game.width - START_X_OFFSET, START_Y_OFFSET, PLATFORM_SHORT);
+        this.add(p);
+       
         // Set timers to go to battling state. Meanwhile go to limbo.
         this.currentState = WAITING_STATE;
         break;
@@ -154,3 +153,20 @@ World.prototype.update = function() {
         console.log('shit happened!');
     };
 };
+
+function Platform(game, x, y, type) {
+    var sprite = 'platform';
+    if (type == PLATFORM_SHORT) {
+        sprite = 'platform_short';
+    }
+
+    Phaser.Sprite.call(this, game, x, y, sprite);
+    game.physics.enable(this);
+
+    this.body.allowGravity = false;
+    this.body.immovable = true;
+    this.anchor.x = 0.5;
+};
+
+Platform.prototype = Object.create(Phaser.Sprite.prototype);
+Platform.prototype.constructor = Platform;
