@@ -193,6 +193,13 @@ function Platform(game, x, y, type) {
     this.body.allowGravity = false;
     this.body.immovable = true;
     this.anchor.x = 0.5;
+
+    this.body.checkCollision.any = false;
+    this.body.checkCollision.down = false;
+    this.body.checkCollision.right = false;
+    this.body.checkCollision.left = false;
+
+    console.log(this.body.checkCollision);
 }
 
 Platform.prototype = Object.create(Phaser.Sprite.prototype);
