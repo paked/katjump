@@ -12,8 +12,6 @@ var PLAYER_ONE = 0,
     PLAYER_TWO = 1;
 
 
-var playerOne;
-var playerTwo;
 var players;
 var platforms;
 var fire;
@@ -25,20 +23,13 @@ function create() {
 
     players = game.add.group();
 
-    playerOne = new Player(game, 0, 0, PLAYER_ONE);
-    players.add(playerOne);
+    var p1 = new Player(game, 0, 0, PLAYER_ONE);
+    players.add(p1);
 
-    playerTwo = new Player(game, 0, 0, PLAYER_TWO);
-    players.add(playerTwo);
+    var p2 = new Player(game, 0, 0, PLAYER_TWO);
+    players.add(p2);
 
-    platforms = game.add.physicsGroup();
-
-    for (var i = 0; i < 5; i++) {
-        var p = platforms.create(game.rnd.between(0, game.width), game.rnd.between(0, game.height), 'platform');
-    }
-
-    platforms.setAll('body.allowGravity', false);
-    platforms.setAll('body.immovable', true);
+    platforms = new World(game);
 
     fire = game.add.sprite(0, 0, 'fire');
     game.physics.arcade.enable(fire);
@@ -106,3 +97,20 @@ Player.prototype._generateMovement = function() {
 
     return keys;
 }
+
+function World(game) {
+    Phaser.Group.call(this, game);
+
+    this.enableBody = true;
+    this.physicsBodyType = Phaser.Physics.ARCADE;
+
+    for (var i = 0; i < 5; i++) {
+        this.create(game.rnd.between(0, game.width), game.rnd.between(0, game.height), 'platform');
+    }
+
+    this.setAll('body.allowGravity', false);
+    this.setAll('body.immovable', true);
+}
+
+World.prototype = Object.create(Phaser.Group.prototype);
+World.prototype.constructor = World;
