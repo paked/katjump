@@ -25,6 +25,8 @@ var BEGINNING_STATE = 0,
 
 // Globals
 var players;
+var p1;
+var p2;
 var platforms;
 var fire;
 
@@ -36,10 +38,10 @@ function create() {
 
     players = game.add.group();
 
-    var p1 = new Player(game, START_X_OFFSET, 0, PLAYER_ONE);
+    p1 = new Player(game, START_X_OFFSET, 0, PLAYER_ONE);
     players.add(p1);
 
-    var p2 = new Player(game, game.width - START_X_OFFSET, 0, PLAYER_TWO);
+    p2 = new Player(game, game.width - START_X_OFFSET, 0, PLAYER_TWO);
     players.add(p2);
 
     platforms = new World(game);
@@ -53,11 +55,40 @@ function create() {
 }
 
 function update() {
-    game.physics.arcade.collide(players, platforms);
     game.physics.arcade.overlap(players, fire, function(f, p) {
         p.kill();
     });
-    
+
+    game.physics.arcade.collide(players, platforms);
+    game.physics.arcade.collide(players, players, function(p1, p2) {
+        var p = null;
+        var op = null;
+        if (p1.controls.down.isDown) {
+            p = p1;
+            op = p2;
+        }
+
+        if (p2.controls.down.isDown) {
+            p = p2;
+            op = p1;
+        }
+
+        if (p == null || op == null) {
+            return;
+        }
+
+        var vel = 500;
+        var accel = 100;
+
+        if (p.controls.left.isDown) {
+            vel *= -1;
+            accel *= -1;
+        }
+
+        op.body.velocity.x += vel;
+        op.body.acceleration.x += accel;
+    });
+
     players.forEach(function(p) {
         game.world.wrap(p, 0, true, true, false);
     });
@@ -74,6 +105,10 @@ function Player(game, x, y, id) {
     game.physics.enable(this);
 
     this.jumpTime = 0;
+    this.jumping = false;
+
+    this.body.drag.x = 900;
+    this.body.maxVelocity.x = 500;
 
     this.controls = this._generateMovement();
 }
@@ -82,14 +117,12 @@ Player.prototype = Object.create(Phaser.Sprite.prototype);
 Player.prototype.constructor = Player;
 
 Player.prototype.update = function() {
-    this.body.velocity.x = 0;
-
     if (this.controls.right.isDown) {
-        this.body.velocity.x = 200;
+        this.body.velocity.x += 20;
     }
 
     if (this.controls.left.isDown) {
-        this.body.velocity.x = -200;
+        this.body.velocity.x += -20;
     }
 
     if (this.controls.up.isDown && (this.body.touching.down || this.body.onFloor()) && game.time.now > this.jumpTime) {
@@ -97,6 +130,7 @@ Player.prototype.update = function() {
         this.jumpTime = game.time.now + 750;
     }
 };
+
 
 Player.prototype._generateMovement = function() {
     var keys = game.input.keyboard.createCursorKeys();
@@ -113,7 +147,7 @@ Player.prototype._generateMovement = function() {
     }
 
     return keys;
-}
+};
 
 function World(game) {
     Phaser.Group.call(this, game);
@@ -134,55 +168,55 @@ World.prototype.update = function() {
     Phaser.Group.prototype.update.call(this);
 
     switch(this.currentState) {
-    // Create a platform underneath each player.
-    case BEGINNING_STATE:
-        // For player one (right side)
-        var p1 = new Platform(game, START_X_OFFSET, START_Y_OFFSET, PLATFORM_SHORT);
-        this.add(p1);
+        // Create a platform underneath each player.
+        case BEGINNING_STATE:
+            // For player one (right side)
+            var p1 = new Platform(game, START_X_OFFSET, START_Y_OFFSET, PLATFORM_SHORT);
+            this.add(p1);
 
-        // For player two (left side)
-        var p2 = new Platform(game, game.width - START_X_OFFSET, START_Y_OFFSET, PLATFORM_SHORT);
-        this.add(p2);
-       
-        game.time.events.add(Phaser.Timer.SECOND * 4, function() {
-            p1.despawn();
-            p2.despawn();
+            // For player two (left side)
+            var p2 = new Platform(game, game.width - START_X_OFFSET, START_Y_OFFSET, PLATFORM_SHORT);
+            this.add(p2);
 
-            this.currentState = BATTLING_STATE;
-        }, this);
+            game.time.events.add(Phaser.Timer.SECOND * 4, function() {
+                p1.despawn();
+                p2.despawn();
 
-        // Set timers to go to battling state. Meanwhile go to limbo.
-        this.currentState = WAITING_STATE;
-        break;
-    case BATTLING_STATE:
-        var p = new Platform(game, 0, game.rnd.integerInRange(64, game.height - 100), PLATFORM_NORMAL);
-        if (game.rnd.frac() < 0.5) {
-            p.body.velocity.x = 100;
-            p.x = -p.width/2;
-        } else {
-            p.body.velocity.x = -100;
-            p.x = game.width + p.width/2;
-        }
+                this.currentState = BATTLING_STATE;
+            }, this);
 
-        if (game.physics.arcade.overlap(p, this)) {
+            // Set timers to go to battling state. Meanwhile go to limbo.
+            this.currentState = WAITING_STATE;
             break;
-        }
+        case BATTLING_STATE:
+            var p = new Platform(game, 0, game.rnd.integerInRange(64, game.height - 100), PLATFORM_NORMAL);
+            if (game.rnd.frac() < 0.5) {
+                p.body.velocity.x = 100;
+                p.x = -p.width/2;
+            } else {
+                p.body.velocity.x = -100;
+                p.x = game.width + p.width/2;
+            }
 
-        this.add(p);
+            if (game.physics.arcade.overlap(p, this)) {
+                break;
+            }
 
-        game.time.events.add(Phaser.Timer.SECOND + (Phaser.Timer.SECOND * 3 * game.rnd.frac()), function() {
-            this.currentState = BATTLING_STATE;
-        }, this);
+            this.add(p);
 
-        this.currentState = WAITING_STATE;
-        break;
-    case MAHEM_STATE:
-        break;
-    case WAITING_STATE:
-        // Do nothing, waiting for timer to trigger.
-        break;
-    default:
-        console.log('shit happened!');
+            game.time.events.add(Phaser.Timer.SECOND + (Phaser.Timer.SECOND * 3 * game.rnd.frac()), function() {
+                this.currentState = BATTLING_STATE;
+            }, this);
+
+            this.currentState = WAITING_STATE;
+            break;
+        case MAHEM_STATE:
+            break;
+        case WAITING_STATE:
+            // Do nothing, waiting for timer to trigger.
+            break;
+        default:
+            console.log('shit happened!');
     };
 };
 
